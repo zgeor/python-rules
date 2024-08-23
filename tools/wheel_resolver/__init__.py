@@ -85,13 +85,16 @@ def main(
     PyPI for PACKAGE with VERSION.
 
     """
-    try:
-        env_outs = os.environ.get("OUTS")
-        out_file, out_metadata = env_outs.split(" ")
-    except Exception as error:
-        if len(env_outs) < 1:
-            _LOGGER.error("Too few rule '$OUTS' specified.")
-        _LOGGER.error(error)
+
+    env_outs = os.environ.get("OUTS")
+    if env_outs is None:
+        _LOGGER.error("No rule '$OUTS' specified.")
+        sys.exit(1)
+
+    out_file, out_metadata = env_outs.split(" ")
+
+    if out_file is None or out_metadata is None:
+        _LOGGER.error("Too few '$OUTS' specified.")
         sys.exit(1)
 
     locator = distlib.locators.SimpleScrapingLocator(url="https://pypi.org/simple")
