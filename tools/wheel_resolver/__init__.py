@@ -93,7 +93,7 @@ def main(
 
     split_env_outs = env_outs.split(' ')
 
-    if split_env_outs < 2:
+    if len(split_env_outs) < 2:
         _LOGGER.error("Too few '$OUTS' specified.")
         sys.exit(1)
     out_file, out_metadata = split_env_outs
