@@ -88,14 +88,15 @@ def main(
 
     env_outs = os.environ.get("OUTS")
     if env_outs is None:
-        _LOGGER.error("No rule '$OUTS' specified.")
+        _LOGGER.error("No '$OUTS' specified.")
         sys.exit(1)
 
-    out_file, out_metadata = env_outs.split(" ")
+    split_env_outs = env_outs.split(' ')
 
-    if out_file is None or out_metadata is None:
+    if split_env_outs < 2:
         _LOGGER.error("Too few '$OUTS' specified.")
         sys.exit(1)
+    out_file, out_metadata = split_env_outs
 
     locator = distlib.locators.SimpleScrapingLocator(url="https://pypi.org/simple")
     locator.wheel_tags = list(itertools.product(interpreter, abi, platform))
