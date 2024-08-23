@@ -583,10 +583,11 @@ def python_wheel(name:str, version:str, labels:list=[], hashes:list=None, packag
 
     file_rule = None
     whl_metadata_outs = [name + '.whl', name + '_whl_metadata.txt']
+    output_files_arg = " ".join(whl_metadata_outs)
     if tool:
         # Try the URLs generated using the wheel name schemes. If those fail, try
         # generating a url with the wheel_resolver tool and download that if successful.
-        cmd = f'$TOOL --package {package_name} --version {version} --prereleases {prereleases} --output-files {' '.join(whl_metadata_cmd_args)} --verbosity {tool_verbosity}'
+        cmd = f'$TOOL --package {package_name} --version {version} --prereleases {prereleases} --output-files {output_files_arg} --verbosity {tool_verbosity}'
         if urls:
             cmd += ''.join([' --urls %s' % url for url in urls])
         file_rule = build_rule(
