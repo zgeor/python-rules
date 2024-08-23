@@ -14,7 +14,6 @@ python_library(
     srcs=[
         "__init__.py",
         "wheel.py",
-        "output.py",
     ],
     deps=[
         "//third_party/python:click",

@@ -9,6 +9,7 @@ import packaging.tags as tags
 import distlib.locators
 import itertools
 import os
+import urllib.request
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,11 +63,18 @@ click_log.basic_config(_LOGGER)
     help="The ABI identifier, for example cp310 or abi3",
 )
 @click.option(
-    "--output-files",
-    metavar="OUTS",
+    "--output-whl-name",
+    metavar="OUTS_WHL_NAME",
     show_default=False,
     multiple=False,
-    help="The names of the whl and txt output files",
+    help="The output wheel name.",
+)
+@click.option(
+    "--output-whl-metadata-name",
+    metavar="OUTS_WHL_META_NAME",
+    show_default=False,
+    multiple=False,
+    help="The of the output metadata file. If not specified the file will not be produced.",
 )
 @click.option(
     "--prereleases",
@@ -84,7 +92,8 @@ def main(
     interpreter: typing.Tuple[str, ...],
     platform: typing.Tuple[str, ...],
     abi: typing.Tuple[str, ...],
-    output_files: str,
+    output_whl_name: str | None,
+    output_whl_metadata_name: str,
     prereleases: bool = False,
 ):
     """Resolve a wheel by name and version to a URL.
@@ -94,17 +103,18 @@ def main(
 
     """
 
-    split_env_outs = output_files.split(" ")
+    if not output_whl_name:
+        _LOGGER.warning("Fallback on using deprecated env variable '$OUTS'.")
+        output_whl_name = os.getenv("OUTS")
 
-    if len(split_env_outs) < 2:
-        _LOGGER.error(f"Too few '$OUTS' specified - '{output_files}'")
+    if not output_whl_name:
+        _LOGGER.error("Neither '--output-whl-name' or env:$OUTS is specified.")
         sys.exit(1)
-    out_file, out_metadata = split_env_outs
 
     locator = distlib.locators.SimpleScrapingLocator(url="https://pypi.org/simple")
     locator.wheel_tags = list(itertools.product(interpreter, abi, platform))
     try:
-        u = wheel.url(
+        pypi_url = wheel.url(
             package_name=package_name,
             package_version=package_version,
             tags=[
@@ -119,16 +129,20 @@ def main(
             locator=locator,
             prereleases=prereleases,
         )
-        pypi_url = (u,)
     except Exception as error:
         _LOGGER.error(error)
         _LOGGER.error(f"could not find PyPI URL for {package_name}-{package_version}")
         sys.exit(1)
 
-    if not output.download(package_name,
-                           package_version,
-                           pypi_url,
-                           out_file,
-                           out_metadata):
-        _LOGGER.error("could not download %s-%s", package_name, package_version)
+    try:
+        urllib.request.urlretrieve(pypi_url, output_whl_name)
+        _LOGGER.info(f"downloaded {package_name}-{package_version} from {u}")
+
+        if output_whl_metadata_name != "":
+            with open(output_whl_metadata_name, "w") as f:
+                f.write(pypi_url)
+        else:
+            _LOGGER.info("Not generating metadata file, as name not defined.")
+    except urllib.error.HTTPError as error:
+        _LOGGER.warning(f"download {package_name}-{package_version} from {u}: {error}")
         sys.exit(1)
