@@ -594,7 +594,7 @@ def python_wheel(name:str, version:str, labels:list=[], hashes:list=None, packag
         file_rule = build_rule(
             name = name,
             tag = 'download',
-            outs = [whl_name, whl_metadata_name],
+            outs = [whl_name],
             cmd = cmd,
             tools = [tool],
             hashes = hashes,
