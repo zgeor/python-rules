@@ -89,7 +89,7 @@ def main(
         env_outs = os.environ.get("OUTS")
         out_file, out_metadata = env_outs.split(" ")
     except Exception as error:
-        if len(output) < 1 or output[0] is None:
+        if len(env_outs) < 1:
             _LOGGER.error("Too few rule '$OUTS' specified.")
         _LOGGER.error(error)
         sys.exit(1)
