@@ -4,7 +4,6 @@ import logging
 import click_log
 import sys
 import tools.wheel_resolver.wheel as wheel
-import tools.wheel_resolver.output as output
 import packaging.tags as tags
 import distlib.locators
 import itertools
@@ -111,6 +110,12 @@ def main(
         _LOGGER.error("Neither '--output-whl-name' or env:$OUTS is specified.")
         sys.exit(1)
 
+    # Try to download the urls provided
+    for u in url:
+        if download(u, output_whl_name, output_whl_metadata_name):
+            return
+
+    # Try pypi
     locator = distlib.locators.SimpleScrapingLocator(url="https://pypi.org/simple")
     locator.wheel_tags = list(itertools.product(interpreter, abi, platform))
     try:
@@ -134,15 +139,21 @@ def main(
         _LOGGER.error(f"could not find PyPI URL for {package_name}-{package_version}")
         sys.exit(1)
 
+    download(pypi_url, output_whl_name, output_whl_metadata_name)
+
+
+def download(url, output_whl_name, output_whl_metadata_name):
     try:
-        urllib.request.urlretrieve(pypi_url, output_whl_name)
-        _LOGGER.info(f"downloaded {package_name}-{package_version} from {u}")
+        urllib.request.urlretrieve(url, output_whl_name)
+        _LOGGER.info(f"downloaded {output_whl_name} from {url}")
 
         if output_whl_metadata_name != "":
             with open(output_whl_metadata_name, "w") as f:
-                f.write(pypi_url)
+                f.write(url)
         else:
-            _LOGGER.info("Not generating metadata file, as name not defined.")
+            _LOGGER.info("not generating metadata file, as name not defined")
+        return True
     except urllib.error.HTTPError as error:
-        _LOGGER.warning(f"download {package_name}-{package_version} from {u}: {error}")
-        sys.exit(1)
+        _LOGGER.warning(f"download {output_whl_name} from {url}: {error}")
+    finally:
+        return False
