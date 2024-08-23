@@ -91,7 +91,7 @@ def main(
         _LOGGER.error("No '$OUTS' specified.")
         sys.exit(1)
 
-    split_env_outs = env_outs.split(' ')
+    split_env_outs = env_outs.split("\ ")
 
     if len(split_env_outs) < 2:
         _LOGGER.error("Too few '$OUTS' specified.")
