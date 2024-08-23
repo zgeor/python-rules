@@ -62,6 +62,13 @@ click_log.basic_config(_LOGGER)
     help="The ABI identifier, for example cp310 or abi3",
 )
 @click.option(
+    "--output-files",
+    metavar="OUTS",
+    show_default=False,
+    multiple=False,
+    help="The names of the whl and txt output files",
+)
+@click.option(
     "--prereleases",
     default=False,
     metavar="PRERELEASES",
@@ -77,6 +84,7 @@ def main(
     interpreter: typing.Tuple[str, ...],
     platform: typing.Tuple[str, ...],
     abi: typing.Tuple[str, ...],
+    output_files: str,
     prereleases: bool = False,
 ):
     """Resolve a wheel by name and version to a URL.
@@ -86,15 +94,10 @@ def main(
 
     """
 
-    env_outs = os.environ.get("OUTS")
-    if env_outs is None:
-        _LOGGER.error("No '$OUTS' specified.")
-        sys.exit(1)
-
-    split_env_outs = env_outs.split("\ ")
+    split_env_outs = output_files.split(" ")
 
     if len(split_env_outs) < 2:
-        _LOGGER.error("Too few '$OUTS' specified.")
+        _LOGGER.error(f"Too few '$OUTS' specified - '{output_files}'")
         sys.exit(1)
     out_file, out_metadata = split_env_outs
 
