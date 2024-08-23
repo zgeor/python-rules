@@ -8,6 +8,7 @@ import tools.wheel_resolver.output as output
 import packaging.tags as tags
 import distlib.locators
 import itertools
+import os
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,13 +86,13 @@ def main(
 
     """
     try:
-        output_name = output.get()
-    except output.OutputNotSetError:
-        _LOGGER.error("could not get $OUTS")
+        env_outs = os.environ.get("OUTS")
+        out_file, out_metadata = env_outs.split(" ")
+    except Exception as error:
+        if len(output) < 1 or output[0] is None:
+            _LOGGER.error("Too few rule '$OUTS' specified.")
+        _LOGGER.error(error)
         sys.exit(1)
-
-    if output.download(package_name, package_version, url, output_name):
-        return
 
     locator = distlib.locators.SimpleScrapingLocator(url="https://pypi.org/simple")
     locator.wheel_tags = list(itertools.product(interpreter, abi, platform))
@@ -117,6 +118,10 @@ def main(
         _LOGGER.error(f"could not find PyPI URL for {package_name}-{package_version}")
         sys.exit(1)
 
-    if not output.download(package_name, package_version, pypi_url, output_name):
+    if not output.download(package_name,
+                           package_version,
+                           pypi_url,
+                           out_file,
+                           out_metadata):
         _LOGGER.error("could not download %s-%s", package_name, package_version)
         sys.exit(1)
